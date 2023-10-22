@@ -1,0 +1,10 @@
+services:
+  builder:
+    image: mingc/android-build-box:latest
+    command: bash ./scripts/build.sh
+    # command: tail -f /dev/null
+    stop_grace_period: 0s
+    volumes:
+      - .:/project
+    env_file:
+      - .env
