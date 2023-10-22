@@ -4,7 +4,7 @@ set -e
 # setup folders
 OBJ_DIR=obj
 GEN_DIR=gen
-PRE_SIGN_APK=app.unaligned.apk
+UNALIGNED_APK=app.unaligned.apk
 DEX_FILE=classes.dex
 PROJECT_DIR=$PROJECT
 
@@ -39,8 +39,10 @@ else
     find $OBJ_DIR -name "*.class" | xargs d8
 fi
 
-aapt package -f -m -F $PRE_SIGN_APK -M $PROJECT_DIR/AndroidManifest.xml -I $ANDROID_JAR -S $PROJECT_DIR/res/
-aapt add $PRE_SIGN_APK $DEX_FILE > /dev/null
+aapt package -f -m -F $UNALIGNED_APK -M $PROJECT_DIR/AndroidManifest.xml -I $ANDROID_JAR -S $PROJECT_DIR/res/
+aapt add $UNALIGNED_APK $DEX_FILE > /dev/null
+ALIGNED_APK=app.aligned.apk
+zipalign -v 4 $UNALIGNED_APK $ALIGNED_APK
 
 # sign the apk
 echo "Signing APK"
@@ -58,11 +60,11 @@ if [ ! -f $KEY_PATH ]; then  # skip certicate creation if already created
             -dname "$KEY_DNAME"
 fi
 APK_PATH=$PROJECT.apk
-apksigner sign --ks $KEY_PATH --ks-pass pass:$KEY_PASS --out $APK_PATH $PRE_SIGN_APK
+apksigner sign --ks $KEY_PATH --ks-pass pass:$KEY_PASS --out $APK_PATH $ALIGNED_APK
 
 # cleanup
 echo "Cleaning up"
-rm -r $GEN_DIR $OBJ_DIR $PRE_SIGN_APK $DEX_FILE .java-version
+rm -r $GEN_DIR $OBJ_DIR $UNALIGNED_APK $ALIGNED_APK $DEX_FILE .java-version
 
 echo "Generated: $OUT_DIR/$APK_PATH"
 
